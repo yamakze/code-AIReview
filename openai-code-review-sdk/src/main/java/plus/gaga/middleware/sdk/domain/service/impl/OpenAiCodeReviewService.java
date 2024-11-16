@@ -1,7 +1,6 @@
 package plus.gaga.middleware.sdk.domain.service.impl;
 
 
-import com.zhipu.oapi.service.v4.model.ChatMessage;
 import plus.gaga.middleware.sdk.domain.model.Model;
 import plus.gaga.middleware.sdk.domain.model.ReturnModel;
 import plus.gaga.middleware.sdk.domain.service.AbstractOpenAiCodeReviewService;
@@ -15,7 +14,6 @@ import plus.gaga.middleware.sdk.infrastructure.weixin.dto.TemplateMessageDTO;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OpenAiCodeReviewService extends AbstractOpenAiCodeReviewService {
