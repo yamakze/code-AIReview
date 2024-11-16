@@ -31,10 +31,19 @@ public class OpenAiCodeReviewService extends AbstractOpenAiCodeReviewService {
 
     @Override
     protected String codeReview(String diffCode) throws Exception {
-        List<ChatMessage> messages = new ArrayList<>();
-        messages.add(new ChatMessage("user", ReturnModel.Default_Format.getInfo()));
-        messages.add(new ChatMessage("user", diffCode));
-        return openAI.completions(messages);
+        ChatCompletionRequestDTO chatCompletionRequest = new ChatCompletionRequestDTO();
+        chatCompletionRequest.setModel(Model.GLM_4_FLASH.getCode());
+        chatCompletionRequest.setMessages(new ArrayList<ChatCompletionRequestDTO.Prompt>() {
+            private static final long serialVersionUID = -7988151926241837899L;
+            {
+                add(new ChatCompletionRequestDTO.Prompt("user", ReturnModel.Default_Format.getInfo()));
+                add(new ChatCompletionRequestDTO.Prompt("user", diffCode));
+            }
+        });
+
+        ChatCompletionSyncResponseDTO completions = openAI.completions(chatCompletionRequest);
+        ChatCompletionSyncResponseDTO.Message message = completions.getChoices().get(0).getMessage();
+        return message.getContent();
     }
 
     @Override

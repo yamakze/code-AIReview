@@ -10,6 +10,5 @@ import java.util.List;
 
 public interface IOpenAI {
 
-    String completions( List<ChatMessage> messages) throws Exception;
-
+    ChatCompletionSyncResponseDTO completions(ChatCompletionRequestDTO requestDTO) throws Exception;
 }

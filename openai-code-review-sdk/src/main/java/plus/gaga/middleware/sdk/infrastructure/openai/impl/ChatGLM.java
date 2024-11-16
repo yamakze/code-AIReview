@@ -1,13 +1,17 @@
 package plus.gaga.middleware.sdk.infrastructure.openai.impl;
 
-import com.zhipu.oapi.ClientV4;
-import com.zhipu.oapi.Constants;
-import com.zhipu.oapi.service.v4.model.ChatCompletionRequest;
-import com.zhipu.oapi.service.v4.model.ChatMessage;
-import com.zhipu.oapi.service.v4.model.ModelApiResponse;
+import com.alibaba.fastjson2.JSON;
 import plus.gaga.middleware.sdk.infrastructure.openai.IOpenAI;
+import plus.gaga.middleware.sdk.infrastructure.openai.dto.ChatCompletionRequestDTO;
+import plus.gaga.middleware.sdk.infrastructure.openai.dto.ChatCompletionSyncResponseDTO;
+import plus.gaga.middleware.sdk.types.utils.BearerTokenUtils;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class ChatGLM implements IOpenAI {
 
@@ -20,19 +24,33 @@ public class ChatGLM implements IOpenAI {
     }
 
     @Override
-    public String completions( List<ChatMessage> messages) throws Exception {
+    public ChatCompletionSyncResponseDTO completions(ChatCompletionRequestDTO requestDTO) throws Exception {
+        String token = BearerTokenUtils.getToken(apiKeySecret);
 
-        ClientV4 client=new ClientV4.Builder(apiKeySecret).build();
+        URL url = new URL(apiHost);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Authorization", "Bearer " + token);
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
+        connection.setDoOutput(true);
 
-        ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
-                .model(Constants.ModelChatGLM4V)
-                .stream(Boolean.FALSE)
-                .invokeMethod(Constants.invokeMethod)
-                .messages(messages)
-                .build();
+        try (OutputStream os = connection.getOutputStream()) {
+            byte[] input = JSON.toJSONString(requestDTO).getBytes(StandardCharsets.UTF_8);
+            os.write(input, 0, input.length);
+        }
 
-        ModelApiResponse invokeModelApiResp = client.invokeModelApi(chatCompletionRequest);
-        return (String) invokeModelApiResp.getData().getChoices().get(0).getMessage().getContent();
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String inputLine;
+        StringBuilder content = new StringBuilder();
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine);
+        }
+
+        in.close();
+        connection.disconnect();
+
+        return JSON.parseObject(content.toString(), ChatCompletionSyncResponseDTO.class);
     }
 
 }
